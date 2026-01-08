@@ -1,0 +1,15 @@
+name: Security Leak Demo
+on: [push]
+
+jobs:
+  leak-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attempting to print secret (Masked)
+        run: echo "My secret is ${{ secrets.MY_API_KEY }}"
+
+      - name: Bypass Masking (LEAK!)
+        # This converts the secret to base64, so GitHub's filter doesn't recognize it.
+        run: |
+          SECRET="${{ secrets.MY_API_KEY }}"
+          echo "$SECRET" | sed 's/./& /g'
